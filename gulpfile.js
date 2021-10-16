@@ -1,59 +1,49 @@
-var gulp = require('gulp'),
-	htmlminify = require("gulp-html-minify"),
-	imagemin = require('gulp-imagemin'),
-	cleanCSS = require('gulp-clean-css'),
-	minify = require('gulp-minify'),
-	gulpCopy = require('gulp-copy');
- 
-gulp.task('image-min', () =>
-    gulp.src('src/img/*')
-        .pipe(imagemin())
-        .pipe(gulp.dest('dist/img'))
-);
+const { series, src, dest } = require('gulp'),
+    htmlminify = require('gulp-html-minify'),
+    cleanCSS = require('gulp-clean-css'),
+    minify = require('gulp-minify');
 
-gulp.task('copy' , function(){
-
-var sourceFiles = [ 'src/icon.png' ];
-var destination = 'dist/';
-
-return gulp
-    .src(sourceFiles)
-    .pipe(gulp.dest(destination));
-});
-
-gulp.task('copy2' , function(){
-
-var sourceFile = 'src/fonts/*';
-var destination = 'dist/fonts/';
-
-return gulp
-    .src(sourceFile)
-    .pipe(gulp.dest(destination));
-});
-
-gulp.task('build-html' , function(){
-    return gulp.src("src/*.html")
+function buildHtml(cb) {
+    src("src/*.html")
         .pipe(htmlminify())
-        .pipe(gulp.dest("dist/"))
-});
+        .pipe(dest("dist/"));
+    cb();
+}
 
-gulp.task('minify-css', () => {
-  return gulp.src('src/css/*.css')
-    .pipe(cleanCSS({compatibility: 'ie8'}))
-    .pipe(gulp.dest('dist/css'));
-});
+function minifyCss(cb) {
+    src('src/css/*.css')
+        .pipe(cleanCSS({ compatibility: 'ie8' }))
+        .pipe(dest('dist/css'));
+    cb();
+}
 
-gulp.task('compress', function() {
-  gulp.src('src/js/*.js')
-    .pipe(minify({
-        ext:{
-            min:'.js'
-        },
-        exclude: ['tasks'],
-        ignoreFiles: ['.combo.js', '-min.js']
-    }))
-    .pipe(gulp.dest('dist/js'))
-});
+function compress(cb) {
 
-gulp.task('default', 
-['image-min','build-html','minify-css','compress','copy','copy2']);
+    src('src/js/*.js')
+        .pipe(minify({
+            ext: {
+                min: '.js'
+            },
+            exclude: ['tasks'],
+            ignoreFiles: ['.combo.js', '-min.js']
+        }))
+        .pipe(dest('dist/js'));
+    cb();
+}
+
+function copy(cb) {
+    src('src/icon.png').pipe(dest('dist/'));
+    cb();
+}
+
+function copy2(cb) {
+    src('src/fonts/*').pipe(dest('dist/fonts/'));
+    cb();
+}
+
+function copy3(cb) {
+    src('src/img/*').pipe(dest('dist/img/'));
+    cb();
+}
+
+exports.build = series(buildHtml, minifyCss, compress, copy, copy2, copy3);
